@@ -1,11 +1,10 @@
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Group, Post
+from .models import Post, Group
 from .forms import PostForm
 from .utils import paginate
-
 
 User = get_user_model()
 
@@ -21,7 +20,7 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    posts = group.group_posts.all()
+    posts = group.posts.all()
     page_obj = paginate(request, posts)
     context = {
         'page_obj': page_obj,
@@ -46,7 +45,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     context = {
-        'post': post,
+        'post': post
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -70,11 +69,14 @@ def post_edit(request, post_id):
     is_edit = True
     post = get_object_or_404(Post, pk=post_id)
     form = PostForm(request.POST or None, instance=post)
+
     if request.user != post.author:
         return redirect('posts:post_detail', post_id)
+
     if form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id)
+
     context = {
         'form': form,
         'is_edit': is_edit,
